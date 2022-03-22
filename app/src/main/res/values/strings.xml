@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">Valutes</string>
+    <string name = "string_value"> "Текущий курс: %1$s (%2$d руб.)"</string>
+    <string name = "string_previous_value"> "Предыдущий курс: %1$s"</string>
+    <string name = "string_name_code"> "%1s (%2$s)"</string>
+    <string name = "string_converted"> "%1s %2s %3s" </string>
 </resources>

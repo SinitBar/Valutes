@@ -1,6 +1,5 @@
 package com.example.valutes
 
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -8,7 +7,7 @@ import androidx.recyclerview.widget.ListAdapter
 import com.example.valutes.databinding.OneCardBinding
 
 class CardRecyclerViewAdapter(
-    private val listener: MainActivity
+    private val listener: CardViewHolder.OnItemClickListener
 ) : ListAdapter<ValuteEntity,
         CardViewHolder>(DiffCallback) {
 
@@ -23,7 +22,6 @@ class CardRecyclerViewAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CardViewHolder {
-        Log.e("onCreateViewHolder", "called")
         return CardViewHolder(
             OneCardBinding.inflate(
                 LayoutInflater.from(parent.context)
@@ -34,6 +32,5 @@ class CardRecyclerViewAdapter(
     override fun onBindViewHolder(holder: CardViewHolder, position: Int) {
         val chosenValute = getItem(position)
         holder.bind(chosenValute)
-        Log.e("onBindViewHolder", "bind $chosenValute to position $position")
     }
 }

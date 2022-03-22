@@ -5,14 +5,13 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <data>
-
         <variable
-            name="vViewModel"
-            type="com.example.valutes.ValutesViewModel" />
+            name="oneValute"
+            type="com.example.valutes.ValuteEntity" />
     </data>
 
         <com.google.android.material.card.MaterialCardView
-            android:id="@+id/one_card"
+            android:id="@+id/a_card"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:clickable="true"
@@ -23,15 +22,15 @@
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="16dp">
 
             <TextView
                 android:id="@+id/text_name"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:text="@{vViewModel.currentValute.name}"
+                android:layout_width="300dp"
+                android:layout_height="30dp"
+                android:text="@{@string/string_name_code(oneValute.name, oneValute.charCode)}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
@@ -40,7 +39,7 @@
                 android:id="@+id/text_value"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@{vViewModel.currentCurrentValue}"
+                android:text="@{@string/string_value(oneValute.stringValue, oneValute.nominal)}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_name" />
@@ -49,7 +48,7 @@
                 android:id="@+id/text_prev"
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:text="@{vViewModel.currentPreviousValue}"
+                android:text="@{@string/string_previous_value(oneValute.stringPreviousValue)}"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/text_value" />

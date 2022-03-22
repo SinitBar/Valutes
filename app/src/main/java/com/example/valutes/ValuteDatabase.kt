@@ -25,7 +25,7 @@ abstract class ValuteDatabase: RoomDatabase() {
                     instance = Room.databaseBuilder(
                         context.applicationContext,
                         ValuteDatabase::class.java,
-                        "favorite_articles_database"
+                        "valutes_database"
                     )
                         .fallbackToDestructiveMigration()
                         .build()

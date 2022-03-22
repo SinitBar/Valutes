@@ -1,19 +1,25 @@
 package com.example.valutes
 
+import android.content.Context
+import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import androidx.databinding.DataBindingUtil
-import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProvider
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.example.valutes.databinding.ActivityMainBinding
-import com.example.valutes.databinding.OneCardBinding
+import kotlin.math.roundToInt
 
-class MainActivity : AppCompatActivity() {
+import android.widget.TextView
+import com.google.android.material.textfield.TextInputEditText
+
+lateinit var sharedPreferences: SharedPreferences
+const val keySizeDB = "DB_SIZE"
+
+class MainActivity : AppCompatActivity(), CardViewHolder.OnItemClickListener {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        sharedPreferences = getPreferences(Context.MODE_PRIVATE)
 
         val dDAO = ValuteDatabase.getInstance(applicationContext).valuteDatabaseDao
 
@@ -21,43 +27,51 @@ class MainActivity : AppCompatActivity() {
 
         val vVModel = ViewModelProvider(this, vmFactory)[ValutesViewModel::class.java]
 
-        // call init for vVModel!!!! but how?
-        vVModel.initModel(applicationContext)
+        vVModel.sizeDB = sharedPreferences.getInt(keySizeDB, 0)
 
         val binding =
             DataBindingUtil.setContentView<ActivityMainBinding>(this, R.layout.activity_main)
 
-        val cardBinding =
-            DataBindingUtil.setContentView<OneCardBinding>(this, R.layout.one_card)
-
         binding.lifecycleOwner = this
-        cardBinding.lifecycleOwner = this
 
         binding.recyclerView.setHasFixedSize(true)
-        binding.recyclerView.layoutManager = LinearLayoutManager(applicationContext)
 
         binding.recyclerView.adapter = CardRecyclerViewAdapter(this)
 
-        cardBinding.vViewModel = vVModel
-        binding.vViewModel = vVModel
-
-        // Create the observer which updates the UI.
-        val recyclerViewObserver = Observer<List<ValuteEntity>> {
-            // Update the UI
-            // but how?
-            bindRecyclerView(binding.recyclerView, vVModel.getList())
+        binding.vViewModel = vVModel.also {
+            it.currentValuteNumber.value = 0
         }
 
-        vVModel.getList().observe(this, recyclerViewObserver)
-
-        Log.i("MainActivity", "done")
+        binding.buttonRefresh.setOnClickListener { vVModel.initModel() }
     }
 
-    override fun onStop() {
-        super.onStop()
+    fun setRusSumText() {
+        val searchSum = findViewById<TextInputEditText>(R.id.search_sum)
+        if (searchSum.text.toString()[0] == '.')
+            searchSum.setText(searchSum.text?.drop(1))
+        val sum = (
+                searchSum.text.toString().toDouble() * 10000
+                ).roundToInt() / 10000.0
+        searchSum.setText(sum.toString())
+        searchSum.setSelection(sum.toString().length)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    override fun onItemClicked(valute: ValuteEntity) {
+        setRusSumText()
+        val textView = findViewById<TextView>(R.id.text_converted)
+        val rusSumString = findViewById<TextInputEditText>(R.id.search_sum).text.toString()
+        var rusSum = 0.0
+        if (rusSumString != "" && rusSumString != ".")
+        {
+            rusSum = rusSumString.toDouble()
+            val nominal = valute.Nominal
+            val valuteCourse = valute.Value
+            val result = (((nominal  * rusSum / valuteCourse)  * 10000).roundToInt() / 10000.0).toString()
+            textView.text = resources.getString(
+                R.string.string_converted,
+                valute.CharCode, System.lineSeparator(), result
+            )
+        }
+
     }
 }

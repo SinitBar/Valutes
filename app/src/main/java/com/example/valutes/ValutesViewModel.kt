@@ -1,66 +1,67 @@
 package com.example.valutes
 
 import android.app.Application
-import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
+import retrofit2.Response
 
 class ValutesViewModel(
     val database: ValuteDatabaseDao,
-    application: Application
-) : AndroidViewModel(application) {
+    val appl: Application,
+) : AndroidViewModel(appl) {
 
-    private var posted = false
+    var sizeDB = 0
 
-//    val recyclerViewProperties: MutableLiveData<List<ValuteEntity>> by lazy {
-//        MutableLiveData<List<ValuteEntity>>()
-//    }
-
-    val currentValute: MutableLiveData<ValuteEntity> by lazy {
-        MutableLiveData<ValuteEntity>()
+    val recyclerViewProperties: MutableLiveData<List<ValuteEntity>> by lazy {
+        MutableLiveData<List<ValuteEntity>>()
     }
 
-    fun initModel(context: Context? = null) {
+    override fun onCleared() {
+        super.onCleared()
+        sharedPreferences.edit().remove(keySizeDB).apply()
+        sharedPreferences.edit().putInt(keySizeDB, sizeDB).apply()
+        viewModelScope.launch {
+            database.clear()
+            val list = recyclerViewProperties.value ?: emptyList()
+            for (v in list)
+                insertValute(v)
+        }
+    }
 
-        Log.e("initModel", "in here")
+    private val _requestResult = MutableLiveData<Response<RequestResult>>()
+
+    val requestResult: LiveData<Response<RequestResult>>
+        get() = _requestResult
+
+    var currentValuteNumber = MutableLiveData<Int>()
+
+    init {
+        if (sizeDB == 0)
+            initModel()
+        else
+            initfromDB()
+    }
+
+    fun initfromDB() {
+        viewModelScope.launch {
+            recyclerViewProperties.value = database.getAllValutes().value
+        }
+    }
+
+    fun initModel() {
+        val context = appl.applicationContext
         viewModelScope.launch {
             try {
-                val reqResult = withContext(Dispatchers.IO) {
-                    ApiObject.retrofitService.getAll()
-                }
-                if (reqResult.body() == null && context != null) {
-                    Toast.makeText(
-                        context,
-                        "There are some problems with the site",
-                        Toast.LENGTH_LONG
-                    ).show()
-                }
-                reqResult.body()?.let { requestResult ->
-                    val list = requestResult.Valute.getValutesList()
-                    if (!posted) {
-                        //recyclerViewProperties.value = list
-                        currentValute.value = list[0]
-                        posted = true
-                    }
-                    else {
-                        database.clear()
-                        //recyclerViewProperties.postValue(list)
-                        currentValute.postValue(list[0])
-                    }
-                    //Log.e("MainActivity", "initialization Model/////")
-                   // recyclerViewProperties.value?.let {
-                        Log.e("MainActivity", "value of properties: $list")
-                        for(v in list) {
-                            insertValute(v)
-                        }
-                    //}
+                database.clear()
+                _requestResult.value = ApiObject.retrofitService.getAll()
+                requestResult.value?.body()?.let { requestResult ->
+                    recyclerViewProperties.value = requestResult.Valute.getValutesList()
+                    for (v in requestResult.Valute.getValutesList())
+                        insertValute(v)
                 }
             } catch (e: Exception) {
                 if (context != null) {
@@ -70,22 +71,13 @@ class ValutesViewModel(
                         Toast.LENGTH_LONG
                     ).show()
                 }
-                Log.e("MainActivity", "error: e = $e")
             }
         }
-        Log.e("getList", "started call")
-        getList() // to check
-        Log.e("getList", "ended call")
-    }
 
-    fun getList(): LiveData<List<ValuteEntity>> {
-        Log.e("getList", "properties: ${database.getAllValutes().value}")
-        //return recyclerViewProperties.value ?: emptyList()
-        return database.getAllValutes()
     }
 
     suspend fun insertValute(valute: ValuteEntity) {
-        val job = viewModelScope.launch(Dispatchers.IO) {
+        val job = viewModelScope.launch {
             if (database.containsValute(valute.CharCode))
                 database.delete(valute.CharCode)
         }
@@ -99,11 +91,8 @@ class ValutesViewModel(
             Value = valute.Value,
             Previous = valute.Previous
         )
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             database.insert(valut)
         }
     }
-
-    fun getCurrentCurrentValue() = currentValute.value?.Value.toString()
-    fun getCurrentPreviousValue() = currentValute.value?.Previous.toString()
 }
